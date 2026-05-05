@@ -50,9 +50,9 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/bookstack` - Data storage
-- `./rootfs/config/bookstack` - Data storage
-- `./rootfs/data/db/mariadb/bookstack` - Data storage
+- `./volumes/data/bookstack` - Data storage
+- `./volumes/config/bookstack` - Data storage
+- `./volumes/data/db/mariadb/bookstack` - Data storage
 
 ## 🔐 Security
 
