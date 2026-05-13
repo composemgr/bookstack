@@ -15,12 +15,32 @@ services:
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     logging: *default-logging
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://bookstack-app:80'
+      - 'cloudflare.hostname=bookstack.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.bookstack-app.entrypoints=http'
+      - 'traefik.http.routers.bookstack-app-secure.tls=true'
+      - 'traefik.http.routers.bookstack-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.bookstack-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.bookstack-app.middlewares=bookstack-app-https-redirect'
+      - 'traefik.http.routers.bookstack-app-secure.entrypoints=https'
+      - 'traefik.http.routers.bookstack-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.bookstack-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.bookstack-app-secure.service=bookstack-app'
+      - 'traefik.http.services.bookstack-app.loadbalancer.server.port=80'
     networks:
       - bookstack
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8096:80"
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: bookstack-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
       PUID: ${SERVICE_USER:-1000}
       PGID: ${SERVICE_GROUP:-1000}
       APP_URL: https://${BASE_HOST_NAME:-$HOSTNAME}
@@ -56,6 +76,7 @@ services:
       - bookstack
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: bookstack-db
       MARIADB_DATABASE: ${DB_CREATE_DATABASE_NAME:-bookstack}
       MARIADB_USER: ${DB_USER_NAME:-bookstack}
       MARIADB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
@@ -72,3 +93,7 @@ networks:
   bookstack:
     name: bookstack
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
